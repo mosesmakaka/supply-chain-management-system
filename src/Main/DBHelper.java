@@ -32,6 +32,13 @@ public class DBHelper {
                         if (!hasType) {
                             stmt.executeUpdate("ALTER TABLE business_entity ADD COLUMN type TEXT;");
                         }
+
+                        // Enable WAL journal mode for better concurrency
+                        try {
+                            stmt.execute("PRAGMA journal_mode=WAL;");
+                        } catch (SQLException ignore) {
+                            // ignore if pragma unsupported
+                        }
                     }
                 }
             }
