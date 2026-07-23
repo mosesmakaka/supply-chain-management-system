@@ -22,6 +22,12 @@ public class RawMaterialInterplay {
         return producers;
     }
 
+    // Replace producers list from DB load
+    public static void replaceProducers(java.util.List<RawMaterialProducer> newList) {
+        producers.clear();
+        if (newList != null) producers.addAll(newList);
+    }
+
 
     public static RawMaterialProducer registerProducer(String name, String materialName, String generationCostStr, String sellingPriceStr, String capacityStr, String initialFundsStr) throws InvalidInputException {
         if (name == null || materialName == null) {

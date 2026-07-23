@@ -6,9 +6,14 @@ import GUI.Market.MList;
 import GUI.RawMaterial.RawMProducerList;
 
 import Main.DBHelper;
+import GUI.util.SwingWorkers;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.List;
+import User_Interaction.FactoryInterplay;
+import User_Interaction.MarketInterplay;
+import User_Interaction.RawMaterialInterplay;
 
 public class MainFrame extends JFrame {
     public MainFrame() {
@@ -32,27 +37,97 @@ public class MainFrame extends JFrame {
 
         setLayout(new BorderLayout());
 
-
-        JPanel topPanel = new JPanel(new BorderLayout());
+        JPanel topPanel = new JPanel(new GridBagLayout());
         topPanel.setBackground(new Color(220, 230, 241));
+        GridBagConstraints tc = new GridBagConstraints();
+        tc.insets = new Insets(4,6,4,6);
+        tc.gridx = 0; tc.gridy = 0; tc.weightx = 1.0; tc.anchor = GridBagConstraints.WEST;
 
         JLabel titleLabel = new JLabel("Supply Chain Management System");
         titleLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 0));
-        topPanel.add(titleLabel, BorderLayout.WEST);
+        topPanel.add(titleLabel, tc);
 
-        topPanel.add(exitButton, BorderLayout.EAST);
+        tc.gridx = 1; tc.weightx = 0; tc.anchor = GridBagConstraints.EAST;
+        JButton saveButton = new JButton("Save All");
+        saveButton.setBackground(new Color(200, 230, 200));
+        topPanel.add(saveButton, tc);
+
+        tc.gridx = 2; JButton loadButton = new JButton("Load");
+        loadButton.setBackground(new Color(200, 230, 200));
+        topPanel.add(loadButton, tc);
+
+        tc.gridx = 3; topPanel.add(exitButton, tc);
         add(topPanel, BorderLayout.NORTH);
 
-    
-        JPanel defaultPanel = new JPanel(new GridLayout(4, 1, 5, 5));
+        JPanel defaultPanel = new JPanel(new GridBagLayout());
         defaultPanel.setBackground(new Color(155, 225, 175));
-        defaultPanel.add(producerButton);
-        defaultPanel.add(factoryButton);
-        defaultPanel.add(marketButton);
-        defaultPanel.add(customerButton);
+        GridBagConstraints c = new GridBagConstraints();
+        c.insets = new Insets(6,10,6,10);
+        c.gridx = 0; c.gridy = 0; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 1.0;
+        defaultPanel.add(producerButton, c);
+        c.gridy = 1; defaultPanel.add(factoryButton, c);
+        c.gridy = 2; defaultPanel.add(marketButton, c);
+        c.gridy = 3; defaultPanel.add(customerButton, c);
         add(defaultPanel, BorderLayout.CENTER);
 
+        // Save and Load actions use background workers so EDT isn't blocked
+        saveButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                saveButton.setEnabled(false);
+                SwingWorkers.run(() -> {
+                    // persist all BusinessEntity-backed lists
+                    int saved = 0;
+                    for (Main.Factory f : FactoryInterplay.getFactories()) {
+                        DBHelper.saveEntityWithType("Factory", f);
+                        saved++;
+                    }
+                                        for (Main.Market m : MarketInterplay.getMarkets()) {
+                        DBHelper.saveEntityWithType("Market", m);
+                        saved++;
+                    }
+                                        for (Main.RawMaterialProducer r : RawMaterialInterplay.getProducers()) {
+                        DBHelper.saveEntityWithType("RawMaterialProducer", r);
+                        saved++;
+                    }
+                    return saved;
+                }, (Integer result) -> {
+                    JOptionPane.showMessageDialog(MainFrame.this, "Saved " + result + " entities.");
+                    saveButton.setEnabled(true);
+                }, (Exception ex) -> {
+                    JOptionPane.showMessageDialog(MainFrame.this, "Save failed: " + ex.getMessage());
+                    saveButton.setEnabled(true);
+                });
+            }
+        });
+
+        loadButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                loadButton.setEnabled(false);
+                SwingWorkers.run(() -> {
+                    java.util.List<Main.BusinessEntity> factories = DBHelper.loadEntitiesByType("Factory");
+                    java.util.List<Main.BusinessEntity> markets = DBHelper.loadEntitiesByType("Market");
+                    java.util.List<Main.BusinessEntity> producers = DBHelper.loadEntitiesByType("RawMaterialProducer");
+                    // Convert typed lists
+                    java.util.List<Main.Factory> f2 = new java.util.ArrayList<>();
+                    for (Main.BusinessEntity be : factories) if (be instanceof Main.Factory) f2.add((Main.Factory) be);
+                    java.util.List<Main.Market> m2 = new java.util.ArrayList<>();
+                    for (Main.BusinessEntity be : markets) if (be instanceof Main.Market) m2.add((Main.Market) be);
+                    java.util.List<Main.RawMaterialProducer> r2 = new java.util.ArrayList<>();
+                    for (Main.BusinessEntity be : producers) if (be instanceof Main.RawMaterialProducer) r2.add((Main.RawMaterialProducer) be);
+                    FactoryInterplay.replaceFactories(f2);
+                    MarketInterplay.replaceMarkets(m2);
+                    RawMaterialInterplay.replaceProducers(r2);
+                    return new int[] {f2.size(), m2.size(), r2.size()};
+                }, (int[] res) -> {
+                    JOptionPane.showMessageDialog(MainFrame.this, "Loaded: factories=" + res[0] + " markets=" + res[1] + " producers=" + res[2]);
+                    loadButton.setEnabled(true);
+                }, (Exception ex) -> {
+                    JOptionPane.showMessageDialog(MainFrame.this, "Load failed: " + ex.getMessage());
+                    loadButton.setEnabled(true);
+                });
+            }
+        });
 
         producerButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {

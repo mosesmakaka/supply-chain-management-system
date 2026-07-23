@@ -21,6 +21,12 @@ public class MarketInterplay {
         return markets;
     }
 
+    // Replace markets list from DB load
+    public static void replaceMarkets(java.util.List<Market> newList) {
+        markets.clear();
+        if (newList != null) markets.addAll(newList);
+    }
+
     public static Market registerMarket(String name, String capacityStr, String initialFundsStr) throws InvalidInputException {
         if (name == null || name.trim().isEmpty()) {
             throw new InvalidInputException("Write the name");

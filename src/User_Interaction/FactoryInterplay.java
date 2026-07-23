@@ -31,6 +31,12 @@ public class FactoryInterplay {
         return factories;
     }
 
+    // Replace the current in-memory factories list (used by UI load)
+    public static void replaceFactories(java.util.List<Factory> newList) {
+        factories.clear();
+        if (newList != null) factories.addAll(newList);
+    }
+
     public static List<String> getProductTypes() {
         return productTypes;
     }
