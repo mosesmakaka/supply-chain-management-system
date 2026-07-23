@@ -7,9 +7,24 @@ import java.util.List;
 public class MarketInterplay {
 
     private static List<Market> markets = new ArrayList<>();
+    static {
+        try {
+            for (BusinessEntity e : DBHelper.loadEntitiesByType("Market")) {
+                markets.add((Market) e);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
 
     public static List<Market> getMarkets() {
         return markets;
+    }
+
+    // Replace markets list from DB load
+    public static void replaceMarkets(java.util.List<Market> newList) {
+        markets.clear();
+        if (newList != null) markets.addAll(newList);
     }
 
     public static Market registerMarket(String name, String capacityStr, String initialFundsStr) throws InvalidInputException {
@@ -29,6 +44,11 @@ public class MarketInterplay {
         }
         Market market = new Market(name.trim(), capacity, initialFunds);
         markets.add(market);
+        try {
+            DBHelper.saveEntityWithType("Market", market);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
         return market;
     }
 

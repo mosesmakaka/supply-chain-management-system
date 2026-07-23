@@ -12,12 +12,29 @@ public class FactoryInterplay {
 	
     //tüm factories nesnelerini tutar
     private static List<Factory> factories = new ArrayList<>();
+    static {
+        try {
+            // load persisted factories from DB if present
+            for (BusinessEntity e : DBHelper.loadEntitiesByType("Factory")) {
+                factories.add((Factory) e);
+            }
+        } catch (Exception ex) {
+            // ignore DB load errors for now
+            ex.printStackTrace();
+        }
+    }
 
     // kullanıcı “hangi ürünü üreteceksin?” sorusuna, mevcut tanımlı ürünleri göstermek için productTypes’ı 
     private static List<String> productTypes = new ArrayList<>();
 
     public static List<Factory> getFactories() {
         return factories;
+    }
+
+    // Replace the current in-memory factories list (used by UI load)
+    public static void replaceFactories(java.util.List<Factory> newList) {
+        factories.clear();
+        if (newList != null) factories.addAll(newList);
     }
 
     public static List<String> getProductTypes() {
@@ -42,6 +59,11 @@ public class FactoryInterplay {
         }
         Factory factory = new Factory(name.trim(), capacity, initialFunds);
         factories.add(factory);
+        try {
+            DBHelper.saveEntityWithType("Factory", factory);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
         return factory;
     }
 

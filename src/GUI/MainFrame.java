@@ -1,4 +1,4 @@
-package GUI;
+﻿package GUI;
 
 import GUI.Customer.CList;
 import GUI.Factory.FList;
@@ -6,10 +6,16 @@ import GUI.Market.MList;
 import GUI.RawMaterial.RawMProducerList;
 import GUI.Utils.*;
 
+import Main.DBHelper;
+import GUI.util.SwingWorkers;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.List;
+import User_Interaction.FactoryInterplay;
+import User_Interaction.MarketInterplay;
+import User_Interaction.RawMaterialInterplay;
 
 public class MainFrame extends JFrame {
     public MainFrame() {
@@ -26,6 +32,8 @@ public class MainFrame extends JFrame {
         ModernButton marketButton = new ModernButton(Icons.MARKET + "Markets", ModernColors.INFO);
         ModernButton customerButton = new ModernButton(Icons.CUSTOMER + "Customers", ModernColors.PRIMARY_LIGHT);
         ModernButton exitButton = new ModernButton(Icons.EXIT + "Exit", ModernColors.DANGER);
+        ModernButton saveButton = new ModernButton(Icons.SAVE + "Save All", ModernColors.ACCENT);
+        ModernButton loadButton = new ModernButton(Icons.LOAD + "Load", ModernColors.ACCENT);
 
         setLayout(new BorderLayout());
 
@@ -41,6 +49,8 @@ public class MainFrame extends JFrame {
 
         JPanel exitPanel = new JPanel();
         exitPanel.setOpaque(false);
+        exitPanel.add(saveButton);
+        exitPanel.add(loadButton);
         exitPanel.add(exitButton);
         topPanel.add(exitPanel, BorderLayout.EAST);
         add(topPanel, BorderLayout.NORTH);
@@ -103,89 +113,84 @@ public class MainFrame extends JFrame {
                 System.exit(0);
             }
         });
-    }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                MainFrame frame = new MainFrame();
-                frame.setVisible(true);
+        // Save and Load actions use background workers so EDT isn't blocked
+        saveButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                saveButton.setEnabled(false);
+                SwingWorkers.run(new java.util.concurrent.Callable<Integer>() {
+                    public Integer call() throws Exception {
+                        int saved = 0;
+                        for (Main.Factory f : FactoryInterplay.getFactories()) {
+                            DBHelper.saveEntityWithType("Factory", f);
+                            saved++;
+                        }
+                        for (Main.Market m : MarketInterplay.getMarkets()) {
+                            DBHelper.saveEntityWithType("Market", m);
+                            saved++;
+                        }
+                        for (Main.RawMaterialProducer r : RawMaterialInterplay.getProducers()) {
+                            DBHelper.saveEntityWithType("RawMaterialProducer", r);
+                            saved++;
+                        }
+                        return saved;
+                    }
+                }, new java.util.function.Consumer<Integer>() {
+                    public void accept(Integer result) {
+                        JOptionPane.showMessageDialog(MainFrame.this, "Saved " + result + " entities.");
+                        saveButton.setEnabled(true);
+                    }
+                }, new java.util.function.Consumer<Exception>() {
+                    public void accept(Exception ex) {
+                        JOptionPane.showMessageDialog(MainFrame.this, "Save failed: " + ex.getMessage());
+                        saveButton.setEnabled(true);
+                    }
+                });
+            }
+        });
+
+        loadButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                loadButton.setEnabled(false);
+                SwingWorkers.run(new java.util.concurrent.Callable<int[]>() {
+                    public int[] call() throws Exception {
+                        java.util.List<Main.BusinessEntity> factories = DBHelper.loadEntitiesByType("Factory");
+                        java.util.List<Main.BusinessEntity> markets = DBHelper.loadEntitiesByType("Market");
+                        java.util.List<Main.BusinessEntity> producers = DBHelper.loadEntitiesByType("RawMaterialProducer");
+                        java.util.List<Main.Factory> f2 = new java.util.ArrayList<Main.Factory>();
+                        for (Main.BusinessEntity be : factories) if (be instanceof Main.Factory) f2.add((Main.Factory) be);
+                        java.util.List<Main.Market> m2 = new java.util.ArrayList<Main.Market>();
+                        for (Main.BusinessEntity be : markets) if (be instanceof Main.Market) m2.add((Main.Market) be);
+                        java.util.List<Main.RawMaterialProducer> r2 = new java.util.ArrayList<Main.RawMaterialProducer>();
+                        for (Main.BusinessEntity be : producers) if (be instanceof Main.RawMaterialProducer) r2.add((Main.RawMaterialProducer) be);
+                        FactoryInterplay.replaceFactories(f2);
+                        MarketInterplay.replaceMarkets(m2);
+                        RawMaterialInterplay.replaceProducers(r2);
+                        return new int[] {f2.size(), m2.size(), r2.size()};
+                    }
+                }, new java.util.function.Consumer<int[]>() {
+                    public void accept(int[] res) {
+                        JOptionPane.showMessageDialog(MainFrame.this, "Loaded: factories=" + res[0] + " markets=" + res[1] + " producers=" + res[2]);
+                        loadButton.setEnabled(true);
+                    }
+                }, new java.util.function.Consumer<Exception>() {
+                    public void accept(Exception ex) {
+                        JOptionPane.showMessageDialog(MainFrame.this, "Load failed: " + ex.getMessage());
+                        loadButton.setEnabled(true);
+                    }
+                });
             }
         });
     }
+
+    public static void main(String[] args) {
+            // Initialize SQLite database
+            DBHelper.initDatabase();
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                    MainFrame frame = new MainFrame();
+                    frame.setVisible(true);
+                }
+            });
+        }
 }
-
-
-
-
-
-
-
-
-
-
-
-/*Inheritance, BusinessEntity ve Item sınıfları super class, bağlı olanlar subclass, BusinessEntity'de ortak entity'lerin attribute'larını
-//	depolamaya, envanteki product'ları depolamaya yarar, Item'da ise ortak attribute quantity ve name'i constructor'unda barındırır,
-//bu sayede üst sınfın constructor'unu kullanabiliriz
-
-//Polymorphism, özellikle interplay'lerde downcasting yapıyoruz. Market ve Factory'de de yapıyoruz (özellikle marketinterplayde 97. satır),  amaç BusinessEntity ve Item 
-//superclasslardaki metodlara ve alanlara erişebilmek, "sellerEntity instanceof Factory" ve "it instanceof RawMaterial" örnekleri (rawmaterial producer, 57. satır)
-
-
-//Abstract classes, BusinessEntity ve Item sınıfları abstract class'lar, abstract classtan nesne oluşturmak mümkün değil soyut sınıflar,
-//bir nesne ve attribute temsil etmiyorlar tek başına direkt onlardan nesne oluşturmak istemeyiz bu nedenle abstract olarak tanımlanmışlar
-//aynı zamanda da bazı attribute'lar ortak, superclass'ın constructorını kullanabilmemizi sağlar
-
-
-//Interfaces: Producer sınıfı interface'imiz, burada produce metoduna erişip bütün 4 tane Exception'a erişmeyi sağlıyor, bu sayede 
-//exceptionhandling'e takılıyor
-
-
-
-//Exception Handling, 4 tane ana exceptionhandling sınıfımız var, ekstra producer void produce() metodunda 4 tane sınıfa atıfta bulunuyor
-
-
-//GUI, her arayüz için ayrı frame açılıyor, her sınıfın ayrı package'ları var, genel olarak detail form ve list sınıfları içeriyor hepsi
-
-
-//MVC pattern,kullanıcı arayüzü ve iş mantığını birbirinden ayırarak üç bileşene bölünmüş bir mimaridir:
-//model Uygulamanın “veri”sini ve “iş kuralları”nı tutar. view kullanıcıya gösterilen rakamlar, tablolar ekranlar ve  
-// Controller ise Model ile View arasında köprü olur, kullanıcı eylemlerini yakalar ve uygun main metodlarını çağırır, sonucu GUI'ye yansıtır
-
-
-
-
-//good programming style. private değişkenler, constructorlar, farklı package kullanımları gibi
-
-
-//Controllerlar ne yapar?
-///View (GUI) ile Model arasındaki köprü
-///Girdi Parse & Doğrulama :
-///GUI’den gelen tüm String girdileri (miktar, fiyat, isim, kapasite, bakiye) uygun tiplere (int, double) dönüştürür.
-///Exception Handling & Geri Bildirim
-///Özet Akış (ör. FactoryInterplay)
-View: Kullanıcı “Buy” butonuna tıklar.
-
-Controller (FactoryInterplay.buyItem):
-
-String quantity → int parse, pozitif kontrolü.
-
-buyer.decreaseFunds(), seller.increaseFunds()
-
-removeFromInventory(), addToInventory()
-
-Model: BusinessEntity alt sınıflarının iş kurallarını uygular.
-
-Controller: Başarı/hata durumuna göre GUI’yı günceller veya hata mesajı gösterir.
-
-Tüm User_Interaction sınıfları bu MVC prensibini takip ederek View–Model etkileşimini yönetir ve uygulamanın iş akışını koordine eder.
-///
-///lambda kodu kısaltır(özellikle actionlistener komutlarını)
-///equalsIgnoreCase büyük küçük harfi ignore etmemizi sağlar
-///trim boşlukları temizlemek için kullanılır
-///parseInt() veya parseDouble() String'ten int veya double'a dönüştürmeyi sağlar
-///String.format() ondalık sayıları belirli bir biçimde ekrana basmayı sağlar
-/// */
-
-
