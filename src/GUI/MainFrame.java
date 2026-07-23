@@ -4,55 +4,80 @@ import GUI.Customer.CList;
 import GUI.Factory.FList;
 import GUI.Market.MList;
 import GUI.RawMaterial.RawMProducerList;
+import GUI.Utils.*;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 
 public class MainFrame extends JFrame {
     public MainFrame() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(400, 300);
+        setSize(600, 500);
         setLocationRelativeTo(null);
-        setUndecorated(true);
+        setUndecorated(false);
 
-        getContentPane().setBackground(new Color(220, 230, 241));
+        getContentPane().setBackground(ModernColors.BACKGROUND);
 
-        JButton producerButton = new JButton("Raw Material ");
-        producerButton.setBackground(new Color(155, 225, 175));
-        JButton factoryButton = new JButton("Factories");
-        factoryButton.setBackground(new Color(155, 225, 175));
-        JButton marketButton = new JButton("Markets");
-        marketButton.setBackground(new Color(155, 225, 175));
-        JButton customerButton = new JButton("Customers");
-        customerButton.setBackground(new Color(155, 225, 175));
-        JButton exitButton = new JButton("Exit");
-        exitButton.setBackground(new Color(255, 179, 179));
+        // Modern buttons with icons
+        ModernButton producerButton = new ModernButton(Icons.PRODUCER + "Raw Materials", ModernColors.SUCCESS);
+        ModernButton factoryButton = new ModernButton(Icons.FACTORY + "Factories", ModernColors.PRIMARY);
+        ModernButton marketButton = new ModernButton(Icons.MARKET + "Markets", ModernColors.INFO);
+        ModernButton customerButton = new ModernButton(Icons.CUSTOMER + "Customers", ModernColors.PRIMARY_LIGHT);
+        ModernButton exitButton = new ModernButton(Icons.EXIT + "Exit", ModernColors.DANGER);
 
         setLayout(new BorderLayout());
 
+        // Modern header
+        JPanel topPanel = new ModernPanel(ModernColors.PRIMARY);
+        topPanel.setLayout(new BorderLayout());
+        topPanel.setBorder(new EmptyBorder(15, 20, 15, 20));
 
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBackground(new Color(220, 230, 241));
-
-        JLabel titleLabel = new JLabel("Supply Chain Management System");
-        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 0));
+        JLabel titleLabel = new JLabel(Icons.HOME + "Supply Chain Management System");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        titleLabel.setForeground(Color.WHITE);
         topPanel.add(titleLabel, BorderLayout.WEST);
 
-        topPanel.add(exitButton, BorderLayout.EAST);
+        JPanel exitPanel = new JPanel();
+        exitPanel.setOpaque(false);
+        exitPanel.add(exitButton);
+        topPanel.add(exitPanel, BorderLayout.EAST);
         add(topPanel, BorderLayout.NORTH);
 
-    
-        JPanel defaultPanel = new JPanel(new GridLayout(4, 1, 5, 5));
-        defaultPanel.setBackground(new Color(155, 225, 175));
-        defaultPanel.add(producerButton);
-        defaultPanel.add(factoryButton);
-        defaultPanel.add(marketButton);
-        defaultPanel.add(customerButton);
-        add(defaultPanel, BorderLayout.CENTER);
+        // Modern content panel
+        ModernPanel contentPanel = new ModernPanel();
+        contentPanel.setLayout(new GridBagLayout());
+        contentPanel.setBorder(new EmptyBorder(30, 30, 30, 30));
+        
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
 
+        // Set button sizes
+        Dimension buttonSize = new Dimension(200, 60);
+        producerButton.setPreferredSize(buttonSize);
+        factoryButton.setPreferredSize(buttonSize);
+        marketButton.setPreferredSize(buttonSize);
+        customerButton.setPreferredSize(buttonSize);
 
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        contentPanel.add(producerButton, gbc);
+
+        gbc.gridy = 1;
+        contentPanel.add(factoryButton, gbc);
+
+        gbc.gridy = 2;
+        contentPanel.add(marketButton, gbc);
+
+        gbc.gridy = 3;
+        contentPanel.add(customerButton, gbc);
+
+        add(contentPanel, BorderLayout.CENTER);
+
+        // Event listeners
         producerButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 new RawMProducerList().setVisible(true);

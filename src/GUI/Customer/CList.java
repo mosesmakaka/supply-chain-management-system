@@ -1,10 +1,12 @@
 package GUI.Customer;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 
 import GUI.MainFrame;
+import GUI.Utils.*;
 import User_Interaction.CustomerInterplay;
 import Main.Customer;
 
@@ -15,40 +17,63 @@ public class CList extends JFrame {
 
     public CList() {
         setTitle("Customers");
-        setSize(550, 300);
+        setSize(650, 500);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
+        setUndecorated(false);
 
+        getContentPane().setBackground(ModernColors.BACKGROUND);
+
+        // Header
+        ModernPanel headerPanel = new ModernPanel(ModernColors.PRIMARY);
+        headerPanel.setLayout(new BorderLayout());
+        headerPanel.setBorder(new EmptyBorder(15, 20, 15, 20));
+        JLabel headerLabel = new JLabel(Icons.CUSTOMER + "Customers");
+        headerLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        headerLabel.setForeground(Color.WHITE);
+        headerPanel.add(headerLabel, BorderLayout.WEST);
+        add(headerPanel, BorderLayout.NORTH);
+
+        // List
         customerListModel = new DefaultListModel<>();
         for (Customer c : CustomerInterplay.getCustomers()) {
             customerListModel.addElement(c);
         }
         customerJList = new JList<>(customerListModel);
+        customerJList.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        customerJList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        customerJList.setBackground(ModernColors.SURFACE);
+        customerJList.setSelectionBackground(ModernColors.PRIMARY_LIGHT);
+        customerJList.setSelectionForeground(Color.WHITE);
+        customerJList.setFixedCellHeight(40);
+        
         JScrollPane scrollPane = new JScrollPane(customerJList);
-        customerJList.setBackground(new Color(200, 255, 255));
+        scrollPane.setBorder(BorderFactory.createLineBorder(ModernColors.BORDER));
+        scrollPane.setBackground(ModernColors.SURFACE);
+        
+        ModernPanel contentPanel = new ModernPanel();
+        contentPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+        contentPanel.setLayout(new BorderLayout());
+        contentPanel.add(scrollPane, BorderLayout.CENTER);
+        add(contentPanel, BorderLayout.CENTER);
 
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setBackground(new Color(155,225,175));
-        JButton openButton = new JButton("Open");
-        openButton.setBackground(new Color(155,225,175));
-        JButton registerButton = new JButton("Register New Customer");
-        JButton backButton = new JButton("Back");
-        JButton deleteButton = new JButton("Delete Customer");
-        deleteButton.setBackground(new Color(155, 225, 175));
-        backButton.setBackground(new Color(155, 225, 175));
-        registerButton.setBackground(new Color(155,225,175));
-        buttonPanel.add(openButton);
-        buttonPanel.add(registerButton);
-        buttonPanel.setBackground(new Color(155,225,175));
+        // Buttons panel
+        ModernPanel buttonPanel = new ModernPanel(ModernColors.SURFACE_DARK);
+        buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+        buttonPanel.setBorder(new EmptyBorder(10, 15, 10, 15));
+        
+        ModernButton openButton = new ModernButton(Icons.OPEN + "Open", ModernColors.PRIMARY);
+        ModernButton registerButton = new ModernButton(Icons.ADD + "New Customer", ModernColors.SUCCESS);
+        ModernButton deleteButton = new ModernButton(Icons.DELETE + "Delete", ModernColors.DANGER);
+        ModernButton backButton = new ModernButton(Icons.BACK + "Back", ModernColors.TEXT_SECONDARY);
+
         buttonPanel.add(backButton);
         buttonPanel.add(deleteButton);
-
-        setUndecorated(true);
-
-
-        add(scrollPane, BorderLayout.CENTER);
+        buttonPanel.add(registerButton);
+        buttonPanel.add(openButton);
         add(buttonPanel, BorderLayout.SOUTH);
 
+        // Event listeners
         backButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 dispose();
@@ -59,17 +84,23 @@ public class CList extends JFrame {
         deleteButton.addActionListener(e -> {
             Customer sel = customerJList.getSelectedValue();
             if (sel != null) {
-                CustomerInterplay.deleteCustomer(sel);
-                customerListModel.removeElement(sel);
+                int response = JOptionPane.showConfirmDialog(null, "Delete this customer?", "Confirm", JOptionPane.YES_NO_OPTION);
+                if (response == JOptionPane.YES_OPTION) {
+                    CustomerInterplay.deleteCustomer(sel);
+                    customerListModel.removeElement(sel);
+                }
+            } else {
+                JOptionPane.showMessageDialog(null, "Please select a customer first", "No Selection", JOptionPane.INFORMATION_MESSAGE);
             }
         });
-
 
         openButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 Customer selected = customerJList.getSelectedValue();
                 if (selected != null) {
                     new CDetail(selected).setVisible(true);
+                } else {
+                    JOptionPane.showMessageDialog(null, "Please select a customer first", "No Selection", JOptionPane.INFORMATION_MESSAGE);
                 }
             }
         });
