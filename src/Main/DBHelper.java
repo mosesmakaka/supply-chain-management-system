@@ -17,9 +17,21 @@ public class DBHelper {
             try (Connection conn = getConnection()) {
                 if (conn != null) {
                     try (Statement stmt = conn.createStatement()) {
-                        // add a "type" column so we can rehydrate subclasses
-                        stmt.executeUpdate("CREATE TABLE IF NOT EXISTS business_entity (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, type TEXT, funds REAL, max_capacity INTEGER, used_capacity INTEGER);");
+                        // create tables if they don't exist
+                        stmt.executeUpdate("CREATE TABLE IF NOT EXISTS business_entity (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, funds REAL, max_capacity INTEGER, used_capacity INTEGER);");
                         stmt.executeUpdate("CREATE TABLE IF NOT EXISTS item (id INTEGER PRIMARY KEY AUTOINCREMENT, entity_id INTEGER, name TEXT, quantity INTEGER, FOREIGN KEY(entity_id) REFERENCES business_entity(id));");
+
+                        // ensure 'type' column exists for business_entity; if missing, add it (migration)
+                        boolean hasType = false;
+                        try (ResultSet cols = stmt.executeQuery("PRAGMA table_info('business_entity')")) {
+                            while (cols.next()) {
+                                String colName = cols.getString("name");
+                                if ("type".equalsIgnoreCase(colName)) { hasType = true; break; }
+                            }
+                        }
+                        if (!hasType) {
+                            stmt.executeUpdate("ALTER TABLE business_entity ADD COLUMN type TEXT;");
+                        }
                     }
                 }
             }
@@ -34,46 +46,92 @@ public class DBHelper {
 
     // Save an entity and its inventory. Returns the generated entity id.
     public static long saveEntityWithType(String type, BusinessEntity e) throws SQLException {
-        String sql = "INSERT INTO business_entity(name,type,funds,max_capacity,used_capacity) VALUES(?,?,?,?,?)";
-        try (Connection conn = getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setString(1, e.getName());
-            ps.setString(2, type);
-            ps.setDouble(3, e.getFunds());
-            ps.setInt(4, e.getMaxCapacity());
-            ps.setInt(5, e.getUsedCapacity());
-            ps.executeUpdate();
-            try (ResultSet rs = ps.getGeneratedKeys()) {
-                if (rs.next()) {
-                    long id = rs.getLong(1);
-                    // persist inventory right away
-                    saveInventory(id, e.getInventory());
-                    return id;
+        // Try to find existing entity by name+type to perform update instead of blind insert
+        String find = "SELECT id FROM business_entity WHERE name = ? AND type = ? LIMIT 1";
+        String insert = "INSERT INTO business_entity(name,type,funds,max_capacity,used_capacity) VALUES(?,?,?,?,?)";
+        String update = "UPDATE business_entity SET funds = ?, max_capacity = ?, used_capacity = ? WHERE id = ?";
+
+        int attempts = 0;
+        while (true) {
+            attempts++;
+            try (Connection conn = getConnection()) {
+                conn.setAutoCommit(false);
+                Long existingId = null;
+                try (PreparedStatement fps = conn.prepareStatement(find)) {
+                    fps.setString(1, e.getName());
+                    fps.setString(2, type);
+                    try (ResultSet rs = fps.executeQuery()) {
+                        if (rs.next()) existingId = rs.getLong("id");
+                    }
                 }
+                if (existingId == null) {
+                    try (PreparedStatement ps = conn.prepareStatement(insert, Statement.RETURN_GENERATED_KEYS)) {
+                        ps.setString(1, e.getName());
+                        ps.setString(2, type);
+                        ps.setDouble(3, e.getFunds());
+                        ps.setInt(4, e.getMaxCapacity());
+                        ps.setInt(5, e.getUsedCapacity());
+                        ps.executeUpdate();
+                        try (ResultSet rs = ps.getGeneratedKeys()) {
+                            if (rs.next()) existingId = rs.getLong(1);
+                        }
+                    }
+                } else {
+                    try (PreparedStatement ups = conn.prepareStatement(update)) {
+                        ups.setDouble(1, e.getFunds());
+                        ups.setInt(2, e.getMaxCapacity());
+                        ups.setInt(3, e.getUsedCapacity());
+                        ups.setLong(4, existingId);
+                        ups.executeUpdate();
+                    }
+                }
+
+                if (existingId != null) {
+                    saveInventory(existingId, e.getInventory());
+                }
+                conn.commit();
+                return existingId == null ? -1 : existingId;
+            } catch (SQLException ex) {
+                // retry on database lock
+                if (ex.getMessage() != null && ex.getMessage().toLowerCase().contains("database is locked") && attempts < 5) {
+                    try { Thread.sleep(100 * attempts); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+                    continue;
+                }
+                throw ex;
             }
         }
-        return -1;
     }
 
     public static void saveInventory(long entityId, java.util.List<Item> items) throws SQLException {
         String del = "DELETE FROM item WHERE entity_id = ?";
         String sql = "INSERT INTO item(entity_id,name,quantity) VALUES(?,?,?)";
-        try (Connection conn = getConnection()) {
-            conn.setAutoCommit(false);
-            try (PreparedStatement delPs = conn.prepareStatement(del)) {
-                delPs.setLong(1, entityId);
-                delPs.executeUpdate();
-            }
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
-                for (Item it : items) {
-                    ps.setLong(1, entityId);
-                    ps.setString(2, it.getName());
-                    ps.setInt(3, it.getQuantity());
-                    ps.addBatch();
+        int attempts = 0;
+        while (true) {
+            attempts++;
+            try (Connection conn = getConnection()) {
+                conn.setAutoCommit(false);
+                try (PreparedStatement delPs = conn.prepareStatement(del)) {
+                    delPs.setLong(1, entityId);
+                    delPs.executeUpdate();
                 }
-                ps.executeBatch();
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    for (Item it : items) {
+                        ps.setLong(1, entityId);
+                        ps.setString(2, it.getName());
+                        ps.setInt(3, it.getQuantity());
+                        ps.addBatch();
+                    }
+                    ps.executeBatch();
+                }
+                conn.commit();
+                return;
+            } catch (SQLException ex) {
+                if (ex.getMessage() != null && ex.getMessage().toLowerCase().contains("database is locked") && attempts < 5) {
+                    try { Thread.sleep(100 * attempts); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+                    continue;
+                }
+                throw ex;
             }
-            conn.commit();
         }
     }
 
