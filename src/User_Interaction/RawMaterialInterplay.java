@@ -8,6 +8,15 @@ import java.util.List;
 public class RawMaterialInterplay {
 
     private static List<RawMaterialProducer> producers = new ArrayList<>();
+    static {
+        try {
+            for (BusinessEntity e : DBHelper.loadEntitiesByType("RawMaterialProducer")) {
+                producers.add((RawMaterialProducer) e);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
 
     public static List<RawMaterialProducer> getProducers() {
         return producers;
@@ -33,6 +42,11 @@ public class RawMaterialInterplay {
         }
         RawMaterialProducer producer = new RawMaterialProducer(name.trim(), materialName.trim(), genCost, sellPrice, capacity, initialFunds);
         producers.add(producer);
+        try {
+            DBHelper.saveEntityWithType("RawMaterialProducer", producer);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
         return producer;
     }
 

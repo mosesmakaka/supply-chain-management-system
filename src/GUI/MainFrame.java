@@ -5,6 +5,7 @@ import GUI.Factory.FList;
 import GUI.Market.MList;
 import GUI.RawMaterial.RawMProducerList;
 
+import Main.DBHelper;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -81,13 +82,15 @@ public class MainFrame extends JFrame {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                MainFrame frame = new MainFrame();
-                frame.setVisible(true);
-            }
-        });
-    }
+            // Initialize SQLite database
+            DBHelper.initDatabase();
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                    MainFrame frame = new MainFrame();
+                    frame.setVisible(true);
+                }
+            });
+        }
 }
 
 
