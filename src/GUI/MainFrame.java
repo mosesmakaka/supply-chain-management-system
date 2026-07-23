@@ -1,13 +1,15 @@
-package GUI;
+﻿package GUI;
 
 import GUI.Customer.CList;
 import GUI.Factory.FList;
 import GUI.Market.MList;
 import GUI.RawMaterial.RawMProducerList;
+import GUI.Utils.*;
 
 import Main.DBHelper;
 import GUI.util.SwingWorkers;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -18,117 +20,74 @@ import User_Interaction.RawMaterialInterplay;
 public class MainFrame extends JFrame {
     public MainFrame() {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(400, 300);
+        setSize(600, 500);
         setLocationRelativeTo(null);
-        setUndecorated(true);
+        setUndecorated(false);
 
-        getContentPane().setBackground(new Color(220, 230, 241));
+        getContentPane().setBackground(ModernColors.BACKGROUND);
 
-        JButton producerButton = new JButton("Raw Material ");
-        producerButton.setBackground(new Color(155, 225, 175));
-        JButton factoryButton = new JButton("Factories");
-        factoryButton.setBackground(new Color(155, 225, 175));
-        JButton marketButton = new JButton("Markets");
-        marketButton.setBackground(new Color(155, 225, 175));
-        JButton customerButton = new JButton("Customers");
-        customerButton.setBackground(new Color(155, 225, 175));
-        JButton exitButton = new JButton("Exit");
-        exitButton.setBackground(new Color(255, 179, 179));
+        // Modern buttons with icons
+        ModernButton producerButton = new ModernButton(Icons.PRODUCER + "Raw Materials", ModernColors.SUCCESS);
+        ModernButton factoryButton = new ModernButton(Icons.FACTORY + "Factories", ModernColors.PRIMARY);
+        ModernButton marketButton = new ModernButton(Icons.MARKET + "Markets", ModernColors.INFO);
+        ModernButton customerButton = new ModernButton(Icons.CUSTOMER + "Customers", ModernColors.PRIMARY_LIGHT);
+        ModernButton exitButton = new ModernButton(Icons.EXIT + "Exit", ModernColors.DANGER);
+        ModernButton saveButton = new ModernButton(Icons.SAVE + "Save All", ModernColors.ACCENT);
+        ModernButton loadButton = new ModernButton(Icons.LOAD + "Load", ModernColors.ACCENT);
 
         setLayout(new BorderLayout());
 
-        JPanel topPanel = new JPanel(new GridBagLayout());
-        topPanel.setBackground(new Color(220, 230, 241));
-        GridBagConstraints tc = new GridBagConstraints();
-        tc.insets = new Insets(4,6,4,6);
-        tc.gridx = 0; tc.gridy = 0; tc.weightx = 1.0; tc.anchor = GridBagConstraints.WEST;
+        // Modern header
+        JPanel topPanel = new ModernPanel(ModernColors.PRIMARY);
+        topPanel.setLayout(new BorderLayout());
+        topPanel.setBorder(new EmptyBorder(15, 20, 15, 20));
 
-        JLabel titleLabel = new JLabel("Supply Chain Management System");
-        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 0));
-        topPanel.add(titleLabel, tc);
+        JLabel titleLabel = new JLabel(Icons.HOME + "Supply Chain Management System");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        titleLabel.setForeground(Color.WHITE);
+        topPanel.add(titleLabel, BorderLayout.WEST);
 
-        tc.gridx = 1; tc.weightx = 0; tc.anchor = GridBagConstraints.EAST;
-        JButton saveButton = new JButton("Save All");
-        saveButton.setBackground(new Color(200, 230, 200));
-        topPanel.add(saveButton, tc);
-
-        tc.gridx = 2; JButton loadButton = new JButton("Load");
-        loadButton.setBackground(new Color(200, 230, 200));
-        topPanel.add(loadButton, tc);
-
-        tc.gridx = 3; topPanel.add(exitButton, tc);
+        JPanel exitPanel = new JPanel();
+        exitPanel.setOpaque(false);
+        exitPanel.add(saveButton);
+        exitPanel.add(loadButton);
+        exitPanel.add(exitButton);
+        topPanel.add(exitPanel, BorderLayout.EAST);
         add(topPanel, BorderLayout.NORTH);
 
-        JPanel defaultPanel = new JPanel(new GridBagLayout());
-        defaultPanel.setBackground(new Color(155, 225, 175));
-        GridBagConstraints c = new GridBagConstraints();
-        c.insets = new Insets(6,10,6,10);
-        c.gridx = 0; c.gridy = 0; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 1.0;
-        defaultPanel.add(producerButton, c);
-        c.gridy = 1; defaultPanel.add(factoryButton, c);
-        c.gridy = 2; defaultPanel.add(marketButton, c);
-        c.gridy = 3; defaultPanel.add(customerButton, c);
-        add(defaultPanel, BorderLayout.CENTER);
+        // Modern content panel
+        ModernPanel contentPanel = new ModernPanel();
+        contentPanel.setLayout(new GridBagLayout());
+        contentPanel.setBorder(new EmptyBorder(30, 30, 30, 30));
+        
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1.0;
 
-        // Save and Load actions use background workers so EDT isn't blocked
-        saveButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                saveButton.setEnabled(false);
-                SwingWorkers.run(() -> {
-                    // persist all BusinessEntity-backed lists
-                    int saved = 0;
-                    for (Main.Factory f : FactoryInterplay.getFactories()) {
-                        DBHelper.saveEntityWithType("Factory", f);
-                        saved++;
-                    }
-                                        for (Main.Market m : MarketInterplay.getMarkets()) {
-                        DBHelper.saveEntityWithType("Market", m);
-                        saved++;
-                    }
-                                        for (Main.RawMaterialProducer r : RawMaterialInterplay.getProducers()) {
-                        DBHelper.saveEntityWithType("RawMaterialProducer", r);
-                        saved++;
-                    }
-                    return saved;
-                }, (Integer result) -> {
-                    JOptionPane.showMessageDialog(MainFrame.this, "Saved " + result + " entities.");
-                    saveButton.setEnabled(true);
-                }, (Exception ex) -> {
-                    JOptionPane.showMessageDialog(MainFrame.this, "Save failed: " + ex.getMessage());
-                    saveButton.setEnabled(true);
-                });
-            }
-        });
+        // Set button sizes
+        Dimension buttonSize = new Dimension(200, 60);
+        producerButton.setPreferredSize(buttonSize);
+        factoryButton.setPreferredSize(buttonSize);
+        marketButton.setPreferredSize(buttonSize);
+        customerButton.setPreferredSize(buttonSize);
 
-        loadButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                loadButton.setEnabled(false);
-                SwingWorkers.run(() -> {
-                    java.util.List<Main.BusinessEntity> factories = DBHelper.loadEntitiesByType("Factory");
-                    java.util.List<Main.BusinessEntity> markets = DBHelper.loadEntitiesByType("Market");
-                    java.util.List<Main.BusinessEntity> producers = DBHelper.loadEntitiesByType("RawMaterialProducer");
-                    // Convert typed lists
-                    java.util.List<Main.Factory> f2 = new java.util.ArrayList<>();
-                    for (Main.BusinessEntity be : factories) if (be instanceof Main.Factory) f2.add((Main.Factory) be);
-                    java.util.List<Main.Market> m2 = new java.util.ArrayList<>();
-                    for (Main.BusinessEntity be : markets) if (be instanceof Main.Market) m2.add((Main.Market) be);
-                    java.util.List<Main.RawMaterialProducer> r2 = new java.util.ArrayList<>();
-                    for (Main.BusinessEntity be : producers) if (be instanceof Main.RawMaterialProducer) r2.add((Main.RawMaterialProducer) be);
-                    FactoryInterplay.replaceFactories(f2);
-                    MarketInterplay.replaceMarkets(m2);
-                    RawMaterialInterplay.replaceProducers(r2);
-                    return new int[] {f2.size(), m2.size(), r2.size()};
-                }, (int[] res) -> {
-                    JOptionPane.showMessageDialog(MainFrame.this, "Loaded: factories=" + res[0] + " markets=" + res[1] + " producers=" + res[2]);
-                    loadButton.setEnabled(true);
-                }, (Exception ex) -> {
-                    JOptionPane.showMessageDialog(MainFrame.this, "Load failed: " + ex.getMessage());
-                    loadButton.setEnabled(true);
-                });
-            }
-        });
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        contentPanel.add(producerButton, gbc);
 
+        gbc.gridy = 1;
+        contentPanel.add(factoryButton, gbc);
+
+        gbc.gridy = 2;
+        contentPanel.add(marketButton, gbc);
+
+        gbc.gridy = 3;
+        contentPanel.add(customerButton, gbc);
+
+        add(contentPanel, BorderLayout.CENTER);
+
+        // Event listeners
         producerButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 new RawMProducerList().setVisible(true);
@@ -154,6 +113,74 @@ public class MainFrame extends JFrame {
                 System.exit(0);
             }
         });
+
+        // Save and Load actions use background workers so EDT isn't blocked
+        saveButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                saveButton.setEnabled(false);
+                SwingWorkers.run(new java.util.concurrent.Callable<Integer>() {
+                    public Integer call() throws Exception {
+                        int saved = 0;
+                        for (Main.Factory f : FactoryInterplay.getFactories()) {
+                            DBHelper.saveEntityWithType("Factory", f);
+                            saved++;
+                        }
+                        for (Main.Market m : MarketInterplay.getMarkets()) {
+                            DBHelper.saveEntityWithType("Market", m);
+                            saved++;
+                        }
+                        for (Main.RawMaterialProducer r : RawMaterialInterplay.getProducers()) {
+                            DBHelper.saveEntityWithType("RawMaterialProducer", r);
+                            saved++;
+                        }
+                        return saved;
+                    }
+                }, new java.util.function.Consumer<Integer>() {
+                    public void accept(Integer result) {
+                        JOptionPane.showMessageDialog(MainFrame.this, "Saved " + result + " entities.");
+                        saveButton.setEnabled(true);
+                    }
+                }, new java.util.function.Consumer<Exception>() {
+                    public void accept(Exception ex) {
+                        JOptionPane.showMessageDialog(MainFrame.this, "Save failed: " + ex.getMessage());
+                        saveButton.setEnabled(true);
+                    }
+                });
+            }
+        });
+
+        loadButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                loadButton.setEnabled(false);
+                SwingWorkers.run(new java.util.concurrent.Callable<int[]>() {
+                    public int[] call() throws Exception {
+                        java.util.List<Main.BusinessEntity> factories = DBHelper.loadEntitiesByType("Factory");
+                        java.util.List<Main.BusinessEntity> markets = DBHelper.loadEntitiesByType("Market");
+                        java.util.List<Main.BusinessEntity> producers = DBHelper.loadEntitiesByType("RawMaterialProducer");
+                        java.util.List<Main.Factory> f2 = new java.util.ArrayList<Main.Factory>();
+                        for (Main.BusinessEntity be : factories) if (be instanceof Main.Factory) f2.add((Main.Factory) be);
+                        java.util.List<Main.Market> m2 = new java.util.ArrayList<Main.Market>();
+                        for (Main.BusinessEntity be : markets) if (be instanceof Main.Market) m2.add((Main.Market) be);
+                        java.util.List<Main.RawMaterialProducer> r2 = new java.util.ArrayList<Main.RawMaterialProducer>();
+                        for (Main.BusinessEntity be : producers) if (be instanceof Main.RawMaterialProducer) r2.add((Main.RawMaterialProducer) be);
+                        FactoryInterplay.replaceFactories(f2);
+                        MarketInterplay.replaceMarkets(m2);
+                        RawMaterialInterplay.replaceProducers(r2);
+                        return new int[] {f2.size(), m2.size(), r2.size()};
+                    }
+                }, new java.util.function.Consumer<int[]>() {
+                    public void accept(int[] res) {
+                        JOptionPane.showMessageDialog(MainFrame.this, "Loaded: factories=" + res[0] + " markets=" + res[1] + " producers=" + res[2]);
+                        loadButton.setEnabled(true);
+                    }
+                }, new java.util.function.Consumer<Exception>() {
+                    public void accept(Exception ex) {
+                        JOptionPane.showMessageDialog(MainFrame.this, "Load failed: " + ex.getMessage());
+                        loadButton.setEnabled(true);
+                    }
+                });
+            }
+        });
     }
 
     public static void main(String[] args) {
@@ -167,78 +194,3 @@ public class MainFrame extends JFrame {
             });
         }
 }
-
-
-
-
-
-
-
-
-
-
-
-/*Inheritance, BusinessEntity ve Item sınıfları super class, bağlı olanlar subclass, BusinessEntity'de ortak entity'lerin attribute'larını
-//	depolamaya, envanteki product'ları depolamaya yarar, Item'da ise ortak attribute quantity ve name'i constructor'unda barındırır,
-//bu sayede üst sınfın constructor'unu kullanabiliriz
-
-//Polymorphism, özellikle interplay'lerde downcasting yapıyoruz. Market ve Factory'de de yapıyoruz (özellikle marketinterplayde 97. satır),  amaç BusinessEntity ve Item 
-//superclasslardaki metodlara ve alanlara erişebilmek, "sellerEntity instanceof Factory" ve "it instanceof RawMaterial" örnekleri (rawmaterial producer, 57. satır)
-
-
-//Abstract classes, BusinessEntity ve Item sınıfları abstract class'lar, abstract classtan nesne oluşturmak mümkün değil soyut sınıflar,
-//bir nesne ve attribute temsil etmiyorlar tek başına direkt onlardan nesne oluşturmak istemeyiz bu nedenle abstract olarak tanımlanmışlar
-//aynı zamanda da bazı attribute'lar ortak, superclass'ın constructorını kullanabilmemizi sağlar
-
-
-//Interfaces: Producer sınıfı interface'imiz, burada produce metoduna erişip bütün 4 tane Exception'a erişmeyi sağlıyor, bu sayede 
-//exceptionhandling'e takılıyor
-
-
-
-//Exception Handling, 4 tane ana exceptionhandling sınıfımız var, ekstra producer void produce() metodunda 4 tane sınıfa atıfta bulunuyor
-
-
-//GUI, her arayüz için ayrı frame açılıyor, her sınıfın ayrı package'ları var, genel olarak detail form ve list sınıfları içeriyor hepsi
-
-
-//MVC pattern,kullanıcı arayüzü ve iş mantığını birbirinden ayırarak üç bileşene bölünmüş bir mimaridir:
-//model Uygulamanın “veri”sini ve “iş kuralları”nı tutar. view kullanıcıya gösterilen rakamlar, tablolar ekranlar ve  
-// Controller ise Model ile View arasında köprü olur, kullanıcı eylemlerini yakalar ve uygun main metodlarını çağırır, sonucu GUI'ye yansıtır
-
-
-
-
-//good programming style. private değişkenler, constructorlar, farklı package kullanımları gibi
-
-
-//Controllerlar ne yapar?
-///View (GUI) ile Model arasındaki köprü
-///Girdi Parse & Doğrulama :
-///GUI’den gelen tüm String girdileri (miktar, fiyat, isim, kapasite, bakiye) uygun tiplere (int, double) dönüştürür.
-///Exception Handling & Geri Bildirim
-///Özet Akış (ör. FactoryInterplay)
-View: Kullanıcı “Buy” butonuna tıklar.
-
-Controller (FactoryInterplay.buyItem):
-
-String quantity → int parse, pozitif kontrolü.
-
-buyer.decreaseFunds(), seller.increaseFunds()
-
-removeFromInventory(), addToInventory()
-
-Model: BusinessEntity alt sınıflarının iş kurallarını uygular.
-
-Controller: Başarı/hata durumuna göre GUI’yı günceller veya hata mesajı gösterir.
-
-Tüm User_Interaction sınıfları bu MVC prensibini takip ederek View–Model etkileşimini yönetir ve uygulamanın iş akışını koordine eder.
-///
-///lambda kodu kısaltır(özellikle actionlistener komutlarını)
-///equalsIgnoreCase büyük küçük harfi ignore etmemizi sağlar
-///trim boşlukları temizlemek için kullanılır
-///parseInt() veya parseDouble() String'ten int veya double'a dönüştürmeyi sağlar
-///String.format() ondalık sayıları belirli bir biçimde ekrana basmayı sağlar
-/// */
-
-
