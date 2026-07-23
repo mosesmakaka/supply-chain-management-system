@@ -70,3 +70,4 @@ public class FDispose extends JFrame {
         }
     }
 }
+

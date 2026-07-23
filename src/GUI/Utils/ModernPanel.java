@@ -64,3 +64,4 @@ public class ModernPanel extends JPanel {
         this.shadowOffset = offset;
     }
 }
+

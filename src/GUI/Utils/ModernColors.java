@@ -34,3 +34,4 @@ public class ModernColors {
     public static final Color INFO = new Color(33, 150, 243); // Light blue
     public static final Color INFO_DARK = new Color(13, 110, 253);
 }
+

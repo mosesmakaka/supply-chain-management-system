@@ -1,4 +1,4 @@
-﻿package Main;
+package Main;
 
 public class DBColumns {
     public enum Tables {
@@ -28,3 +28,4 @@ public class DBColumns {
         Item(String col) { this.col = col; }
     }
 }
+

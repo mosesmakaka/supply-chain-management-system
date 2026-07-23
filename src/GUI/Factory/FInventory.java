@@ -30,3 +30,4 @@ public class FInventory extends JFrame {
         add(new JScrollPane(inventoryList), BorderLayout.CENTER);
     }
 }
+

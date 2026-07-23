@@ -8,3 +8,4 @@ public class InsufficientStorageException extends Exception {
         super(message);
     }
 }
+

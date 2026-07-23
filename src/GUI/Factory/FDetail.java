@@ -65,3 +65,4 @@ public class FDetail extends JFrame {
         });
     }
 }
+

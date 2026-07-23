@@ -73,3 +73,4 @@ public class RawMaterialProducer extends BusinessEntity implements Producer {
         generateMaterial(quantity);
     }
 }
+

@@ -1,4 +1,4 @@
-﻿package Main;
+package Main;
 
 import java.sql.*;
 import java.io.File;
@@ -117,8 +117,8 @@ public class DBHelper {
                 return existingId == null ? -1 : existingId;
             } catch (SQLException ex) {
                 // retry on database lock
-                if (ex.getMessage() != null && ex.getMessage().ToLower().Contains("database is locked") && attempts < 5) {
-                    try { Thread.Sleep(100 * attempts); } catch { }
+                if (ex.getMessage() != null && ex.getMessage().toLowerCase().contains("database is locked") && attempts < 5) {
+                    try { Thread.sleep(100 * attempts); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
                     continue;
                 }
                 throw ex;
@@ -151,8 +151,8 @@ public class DBHelper {
                 conn.commit();
                 return;
             } catch (SQLException ex) {
-                if (ex.getMessage() != null && ex.getMessage().ToLower().Contains("database is locked") && attempts < 5) {
-                    try { Thread.Sleep(100 * attempts); } catch { }
+                if (ex.getMessage() != null && ex.getMessage().toLowerCase().contains("database is locked") && attempts < 5) {
+                    try { Thread.sleep(100 * attempts); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
                     continue;
                 }
                 throw ex;
@@ -212,3 +212,4 @@ public class DBHelper {
         return out;
     }
 }
+

@@ -21,3 +21,4 @@ public class CInventory extends JFrame {
         add(new JScrollPane(inventoryList), BorderLayout.CENTER);
     }
 }
+

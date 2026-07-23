@@ -1,4 +1,4 @@
-﻿package GUI.Market;
+package GUI.Market;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -77,3 +77,4 @@ public class MList extends JFrame {
         registerButton.addActionListener(e -> new MForm(marketListModel).setVisible(true));
     }
 }
+

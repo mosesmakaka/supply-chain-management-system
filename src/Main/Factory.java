@@ -140,3 +140,4 @@ public class Factory extends BusinessEntity implements Producer {
         produceProduct(targetManufacturedProduct, quantity);
     }
 }
+

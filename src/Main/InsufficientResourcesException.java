@@ -7,3 +7,4 @@ public class InsufficientResourcesException extends Exception {
         super(message);
     }
 }
+

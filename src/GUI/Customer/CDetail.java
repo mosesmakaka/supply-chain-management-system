@@ -40,3 +40,4 @@ public class CDetail extends JFrame {
         });
     }
 }
+

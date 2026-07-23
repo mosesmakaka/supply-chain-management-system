@@ -67,3 +67,4 @@ public class RawMaterialInterplay {
         producer.generateMaterial(amount);
     }
 }
+

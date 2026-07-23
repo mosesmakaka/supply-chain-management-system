@@ -1,4 +1,4 @@
-﻿package GUI;
+package GUI;
 
 import GUI.Customer.CList;
 import GUI.Factory.FList;
@@ -194,3 +194,4 @@ public class MainFrame extends JFrame {
             });
         }
 }
+

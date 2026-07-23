@@ -1,4 +1,4 @@
-﻿package GUI.Factory;
+package GUI.Factory;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -83,3 +83,4 @@ public class FList extends JFrame {
         registerButton.addActionListener(e -> new FForm(factoryListModel).setVisible(true));
     }
 }
+

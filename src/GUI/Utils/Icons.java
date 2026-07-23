@@ -14,6 +14,8 @@ public class Icons {
     public static final String OPEN = "▶ "; // Open/Arrow
     public static final String SAVE = "💾 "; // Save
     public static final String CANCEL = "✗ "; // Cancel
+    public static final String LOAD = "📂 "; // Load
+
     
     // Business Operations
     public static final String BUY = "🛒 "; // Shopping cart
@@ -40,3 +42,4 @@ public class Icons {
     public static final String LIST = "☰ "; // List/Menu
     public static final String CHART = "📊 "; // Chart
 }
+

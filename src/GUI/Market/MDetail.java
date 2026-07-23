@@ -38,3 +38,4 @@ public class MDetail extends JFrame {
         });
     }
 }
+

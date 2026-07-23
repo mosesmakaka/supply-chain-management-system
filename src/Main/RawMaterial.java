@@ -27,3 +27,4 @@ public class RawMaterial extends Item {
         this.sellingPrice = sellingPrice;
     }
 }
+

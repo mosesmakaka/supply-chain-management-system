@@ -69,3 +69,4 @@ public class FBuy extends JFrame {
         }
     }
 }
+

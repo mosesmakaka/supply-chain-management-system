@@ -1,4 +1,4 @@
-﻿package GUI.Customer;
+package GUI.Customer;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -95,3 +95,4 @@ public class CList extends JFrame {
         registerButton.addActionListener(e -> new CForm(customerListModel).setVisible(true));
     }
 }
+

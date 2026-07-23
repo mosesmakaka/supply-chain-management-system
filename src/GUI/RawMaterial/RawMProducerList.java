@@ -1,4 +1,4 @@
-﻿package GUI.RawMaterial;
+package GUI.RawMaterial;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -77,3 +77,4 @@ public class RawMProducerList extends JFrame {
         registerButton.addActionListener(e -> new RawMProducerForm(producerListModel).setVisible(true));
     }
 }
+

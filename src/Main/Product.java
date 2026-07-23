@@ -24,3 +24,4 @@ public class Product extends Item {
         return name + " (x" + quantity + ", price: " + price + ")";
     }
 }
+

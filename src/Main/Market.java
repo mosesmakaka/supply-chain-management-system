@@ -23,3 +23,4 @@ public class Market extends BusinessEntity {
         prod.setPrice(newPrice);
     }
 }
+

@@ -7,3 +7,4 @@ public class InsufficientFundsException extends Exception {
         super(message);
     }
 }
+
